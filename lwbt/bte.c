@@ -575,7 +575,9 @@ s32 bte_inquiry(struct inquiry_info *info,u8 max_cnt,u8 flush)
 	_CPU_ISR_Disable(level);
 	if(btstate.num_founddevs==0 || flush==1) {
 		btstate.hci_cmddone = 0;
+		btstate.cb = NULL;
 		btstate.num_maxdevs = max_cnt;
+		hci_arg(&btstate);
 		hci_inquiry(0x009E8B33,0x03,max_cnt,bte_inquiry_complete);
 		last_err = __bte_waitcmdfinish(&btstate);
 	}
@@ -604,7 +606,9 @@ s32 bte_inquiry_ex(struct inquiry_info_ex *info,u8 max_cnt,u8 flush)
 	_CPU_ISR_Disable(level);
 	if(btstate.num_founddevs==0 || flush==1) {
 		btstate.hci_cmddone = 0;
+		btstate.cb = NULL;
 		btstate.num_maxdevs = max_cnt;
+		hci_arg(&btstate);
 		hci_inquiry(0x009E8B33,0x03,max_cnt,bte_inquiry_complete);
 		last_err = __bte_waitcmdfinish(&btstate);
 	}
@@ -996,11 +1000,11 @@ err_t bte_inquiry_complete(void *arg,struct hci_pcb *pcb,struct hci_inq_res *ire
 				btstate.info[i].psm = p->psm;
 				btstate.info[i].co = p->co;
 
-				printf("bdaddr: %02x:%02x:%02x:%02x:%02x:%02x\n",p->bdaddr.addr[0],p->bdaddr.addr[1],p->bdaddr.addr[2],p->bdaddr.addr[3],p->bdaddr.addr[4],p->bdaddr.addr[5]);
-				printf("cod:    %02x%02x%02x\n",p->cod[0],p->cod[1],p->cod[2]);
-				printf("psrm:   %02x\n",p->psrm);
-				printf("psm:   %02x\n",p->psm);
-				printf("co:   %04x\n",p->co);
+				//printf("bdaddr: %02x:%02x:%02x:%02x:%02x:%02x\n",p->bdaddr.addr[0],p->bdaddr.addr[1],p->bdaddr.addr[2],p->bdaddr.addr[3],p->bdaddr.addr[4],p->bdaddr.addr[5]);
+				//printf("cod:    %02x%02x%02x\n",p->cod[0],p->cod[1],p->cod[2]);
+				//printf("psrm:   %02x\n",p->psrm);
+				//printf("psm:   %02x\n",p->psm);
+				//printf("co:   %04x\n",p->co);
 				p = p->next;
 			}
 			__bte_cmdfinish(state,ERR_OK);

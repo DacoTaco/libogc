@@ -173,4 +173,56 @@ int wiiuse_io_write(struct wiimote_t *wm,ubyte *buf,int len)
 	return ERR_CONN;
 }
 
+int wiiuse_find(struct wiimote_t** wm, int max_wiimotes, int timeout) {
+	int found_devices;
+	int found_wiimotes;
+
+	/* reset all wiimote bluetooth device addresses */
+	for (found_wiimotes = 0; found_wiimotes < max_wiimotes; ++found_wiimotes) {
+		int i = 0;
+		for(; i < BD_ADDR_LEN; i++)
+			wm[found_wiimotes]->bdaddr.addr[i] = 0;
+	}
+	found_wiimotes = 0;
+
+	struct inquiry_info scan_info_arr[128];
+	struct inquiry_info* scan_info = scan_info_arr;
+	memset(&scan_info_arr, 0, sizeof(scan_info_arr));
+
+	/* scan for bluetooth devices */
+	found_devices = bte_inquiry(scan_info, 128, 1);
+	if (found_devices < 0) {
+		return 0;
+	}
+
+	//printf("Found %i bluetooth device(s).", found_devices);
+
+	int i = 0;
+
+	/* display discovered devices */
+	for (; (i < found_devices) && (found_wiimotes < max_wiimotes); ++i) {
+		if ((scan_info[i].cod[0] == WM_DEV_CLASS_0) &&
+			(scan_info[i].cod[1] == WM_DEV_CLASS_1) &&
+			(scan_info[i].cod[2] == WM_DEV_CLASS_2))
+		{
+			/* found a device */
+			sprintf(wm[i]->bdaddr_str, "%x:%x:%x:%x:%x:%x",
+				scan_info[i].bdaddr.addr[0],
+				scan_info[i].bdaddr.addr[1],
+				scan_info[i].bdaddr.addr[2],
+				scan_info[i].bdaddr.addr[3],
+				scan_info[i].bdaddr.addr[4],
+				scan_info[i].bdaddr.addr[5]);
+
+			//printf("Found wiimote (%s) [id %i].", wm[found_wiimotes]->bdaddr_str, wm[found_wiimotes]->unid);
+
+			wm[found_wiimotes]->bdaddr = scan_info[i].bdaddr;
+			WIIMOTE_ENABLE_STATE(wm[found_wiimotes], WIIMOTE_STATE_DEV_FOUND);
+			++found_wiimotes;
+		}
+	}
+
+	return found_wiimotes;
+}
+
 #endif
